@@ -1,0 +1,56 @@
+#!/usr/bin/env bash
+# Lädt die Gesichtsmodelle von InsightFace für Lap und prüft sie.
+# Das RPM enthält diese Dateien nicht. Ihre Lizenz erlaubt keine Weitergabe.
+# Aufruf: sudo lap-face-models           (installieren)
+#         sudo lap-face-models --remove  (entfernen)
+set -euo pipefail
+
+TARGET_DIR="/usr/lib/Lap/models"
+
+# Datei|URL|SHA-256 (gleiche Quellen wie scripts/download_models.sh von Lap)
+MODELS=(
+  "det_500m.onnx|https://huggingface.co/deepghs/insightface/resolve/main/buffalo_s/det_500m.onnx?download=true|5e4447f50245bbd7966bd6c0fa52938c61474a04ec7def48753668a9d8b4ea3a"
+  "w600k_mbf.onnx|https://huggingface.co/deepghs/insightface/resolve/main/buffalo_s/w600k_mbf.onnx?download=true|9cc6e4a75f0e2bf0b1aed94578f144d15175f357bdc05e815e5c4a02b319eb4f"
+)
+
+if [[ $EUID -ne 0 ]]; then
+    echo "Dieses Skript braucht root-Rechte. Aufruf: sudo lap-face-models" >&2
+    exit 1
+fi
+
+if [[ "${1:-}" == "--remove" ]]; then
+    for entry in "${MODELS[@]}"; do
+        rm -fv "$TARGET_DIR/${entry%%|*}"
+    done
+    exit 0
+fi
+
+cat <<'EOF'
+Hinweis zur Lizenz:
+Die Gesichtsmodelle von InsightFace (buffalo_s) sind laut InsightFace nur
+für nicht-kommerzielle Forschung frei. Prüfe, ob deine Nutzung erlaubt ist.
+Details: https://github.com/deepinsight/insightface#license
+
+EOF
+
+mkdir -p "$TARGET_DIR"
+TMP="$(mktemp -d)"
+trap 'rm -rf "$TMP"' EXIT
+
+for entry in "${MODELS[@]}"; do
+    IFS='|' read -r FILE URL SHA <<<"$entry"
+    if [[ -f "$TARGET_DIR/$FILE" ]] && echo "$SHA  $TARGET_DIR/$FILE" | sha256sum --check --status; then
+        echo "✓ $FILE ist schon vorhanden."
+        continue
+    fi
+    echo "⬇ Lade $FILE ..."
+    curl -fL --retry 3 -o "$TMP/$FILE" "$URL"
+    if ! echo "$SHA  $TMP/$FILE" | sha256sum --check --status; then
+        echo "Fehler: Die Prüfsumme von $FILE stimmt nicht. Die Datei wird nicht installiert." >&2
+        exit 1
+    fi
+    install -m 0644 "$TMP/$FILE" "$TARGET_DIR/$FILE"
+    echo "✓ $FILE installiert."
+done
+
+echo "Fertig. Starte Lap neu, damit die Gesichtserkennung die Modelle lädt."

@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=Lap
+Comment=An offline-first photo manager for large local libraries.
+Exec=lap %U
+Icon=lap
+Categories=Graphics;Photography;
+StartupWMClass=Lap
+Terminal=false
