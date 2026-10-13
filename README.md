@@ -54,8 +54,11 @@ Das Skript in COPR eintragen (nach jeder Änderung an `copr-custom.sh`):
 ```
 copr-cli edit-package-custom lap --name lap --script copr-custom.sh \
     --script-builddeps "git curl jq rpmdevtools tar gzip" \
-    --script-chroot fedora-latest-x86_64 --webhook-rebuild on
+    --script-chroot fedora-latest-x86_64 --webhook-rebuild on --timeout 43200
 ```
+
+`--timeout 43200` erlaubt 12 Stunden pro Bau. Der Standard von COPR ist 5 Stunden.
+Der Bau von Lap 0.3.3 hat dieses Limit überschritten, weil Lap mit `lto = true` und `codegen-units = 1` baut.
 
 COPR begrenzt das Skript auf 4 kB. Änderungen an `lap.spec` und den anderen Dateien wirken nach `git push` ohne neues Eintragen.
 
