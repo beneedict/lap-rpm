@@ -30,7 +30,7 @@ if [[ "$CURRENT" != "$VERSION" ]]; then
     rpmdev-bumpspec -n "$VERSION" -c "Update auf $VERSION" -u "$PACKAGER" "$SPEC"
 fi
 
-cp "$SPEC" "$DIR/lap.desktop" "$DIR/lap-face-models" "$DIR/lap-system-libheif.patch" "$OUT/"
+cp "$SPEC" "$DIR/lap.desktop" "$DIR/lap-wrapper.sh" "$DIR/lap-face-models" "$DIR/lap-system-libheif.patch" "$OUT/"
 rpmbuild -bs \
     --define "_sourcedir $OUT" \
     --define "_srcrpmdir $OUT" \

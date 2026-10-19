@@ -21,7 +21,7 @@ fi
 echo "Lap-Version: $VERSION"
 
 git clone --quiet --depth 1 https://github.com/beneedict/lap-rpm.git pkg
-cp pkg/lap.spec pkg/lap.desktop pkg/lap-face-models pkg/lap-system-libheif.patch .
+cp pkg/lap.spec pkg/lap.desktop pkg/lap-wrapper.sh pkg/lap-face-models pkg/lap-system-libheif.patch .
 rm -rf pkg
 
 # libde265 (HEVC, Patente) und libheif nicht verteilen. Das RPM nutzt die System-libheif.

@@ -116,6 +116,33 @@ Die Links liegen in `/usr/lib/Lap/ffmpeg/`.
 - `ffmpeg` aus RPM Fusion: dekodiert HEVC (H.265). Empfohlen.
 - `ffmpeg-free` aus Fedora: kein HEVC. Manche Handy-Videos zeigen kein Vorschaubild.
 
+## WebKit-Speicherfehler in webkit2gtk4.1 2.54.x
+
+Lap nutzt in der Oberfläche `backdrop-filter` (Tailwind `backdrop-blur-*`). Der in
+2.54 neue Skia-Compositor von WebKit hat dort einen Fehler
+([WebKit-Bug 327701](https://bugs.webkit.org/show_bug.cgi?id=327701)):
+`paintBackdrop()` zeichnet den Teilbaum der Backdrop-Wurzel für jeden Layer
+erneut, der k-te Layer kostet 2^(k-1) Zeichenvorgänge. Der WebKit-Webprozess
+wächst dadurch bis zum Abbruch durch den Kernel.
+
+Gemessen auf Fedora 44 mit `webkit2gtk4.1-2.54.1-1.fc44` und Lap 0.3.3:
+
+| Start | WebKit-Webprozess |
+|---|---|
+| normal | 4,9 GiB nach 35 s, danach OOM |
+| mit Umgehung | flach bei etwa 0,34 GiB über 150 s |
+
+Das RPM legt deshalb die Programmdatei nach `/usr/libexec/lap-bin` und liefert
+als `/usr/bin/lap` den Umbruch `lap-wrapper.sh` aus. Er setzt
+`WEBKIT_USE_SKIA_FOR_COMPOSITION=0` und schaltet damit auf den alten
+TextureMapper-Compositor zurück; beschleunigtes Compositing bleibt aktiv.
+`lap.desktop` setzt die Variable zusätzlich.
+
+Nicht mehr nötig ab `webkit2gtk4.1 >= 2.54.2`. Darin stecken die Behebung
+324100@main und die Rückportierung 317695.470@webkitglib/2.54, außerdem
+317695.397@webkitglib/2.54. Danach `lap-wrapper.sh` und den Eintrag in
+`lap.desktop` entfernen und die Programmdatei wieder nach `/usr/bin/` legen.
+
 ## Bekannte Punkte
 
 - Das Tauri-Updater-Plugin in Lap kann ein RPM nicht aktualisieren. Updates kommen über COPR.

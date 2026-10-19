@@ -2,7 +2,12 @@
 Type=Application
 Name=Lap
 Comment=An offline-first photo manager for large local libraries.
-Exec=lap %U
+# WebKitGTK 2.54.1 hat im Skia-Compositor einen Speicherfehler
+# (WebKit-Bug 327701). Nicht die Skia-Variante verwenden, sonst wächst der
+# Webprozess bis zum OOM. Siehe Kommentar in lap-wrapper.sh; das RPM liefert
+# den Umbruch als /usr/bin/lap aus. Der Eintrag hier setzt die Variable
+# zusätzlich, damit auch ein Start über das Menü ohne Umbruch sicher ist.
+Exec=env WEBKIT_USE_SKIA_FOR_COMPOSITION=0 lap %U
 Icon=lap
 Categories=Graphics;Photography;
 StartupWMClass=Lap
