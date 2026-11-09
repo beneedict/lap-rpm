@@ -15,7 +15,7 @@
 
 Name:           lap
 Version:        0.3.3
-Release:        2%{?dist}
+Release:        3%{?dist}
 Summary:        Offline-first photo manager for large local libraries
 License:        GPL-3.0-or-later
 URL:            https://github.com/julyx10/lap
@@ -24,9 +24,6 @@ Source1:        lap.desktop
 # Die InsightFace-Modelle dürfen nicht weitergegeben werden.
 # Dieses Skript lädt sie auf dem Zielrechner.
 Source2:        lap-face-models
-# Startumbruch: setzt WEBKIT_USE_SKIA_FOR_COMPOSITION=0 vor dem Start.
-# Arbeitsumgehung fuer WebKit-Bug 327701 in webkit2gtk4.1 2.54.x.
-Source3:        lap-wrapper.sh
 # Linkt gegen die System-libheif statt libheif und libde265 selbst zu bauen.
 # HEVC (HEIC-Fotos) kommt dann über das Plugin aus libheif-freeworld (RPM Fusion).
 # Nur für Lap 0.3.2 und älter. %%prep wendet ihn nur bei Bedarf an.
@@ -65,6 +62,9 @@ BuildRequires:  oniguruma-devel
 Requires:       /usr/bin/ffmpeg
 Requires:       /usr/bin/ffprobe
 Requires:       hicolor-icon-theme
+# Ab 2.54.2 ist WebKit-Bug 327701 (Skia-Compositor, backdrop-filter) behoben.
+# Aeltere Versionen lassen den WebKit-Webprozess bis zum OOM wachsen.
+Requires:       webkit2gtk4.1 >= 2.54.2
 # Für lap-face-models
 Requires:       curl
 
@@ -103,10 +103,7 @@ cargo build --release --locked -j %{_smp_build_ncpus}
 
 %install
 # Tauri 2 sucht Ressourcen auf Linux unter /usr/lib/<productName>.
-# Die Programmdatei liegt daher ausserhalb von /usr/bin: /usr/bin/lap ist der
-# Startumbruch (setzt WEBKIT_USE_SKIA_FOR_COMPOSITION=0, WebKit-Bug 327701).
-install -Dpm 0755 src-tauri/target/release/Lap %{buildroot}%{_libexecdir}/lap-bin
-install -Dpm 0755 %{SOURCE3} %{buildroot}%{_bindir}/lap
+install -Dpm 0755 src-tauri/target/release/Lap %{buildroot}%{_bindir}/lap
 
 install -Dpm 0755 %{SOURCE2} %{buildroot}%{_bindir}/lap-face-models
 
@@ -130,7 +127,6 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/lap.desktop
 %license LICENSE
 %doc README.md PRIVACY.md
 %{_bindir}/lap
-%{_libexecdir}/lap-bin
 %{_bindir}/lap-face-models
 %{_prefix}/lib/Lap/
 %ghost %{_prefix}/lib/Lap/models/det_500m.onnx
@@ -139,6 +135,12 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/lap.desktop
 %{_datadir}/icons/hicolor/512x512/apps/lap.png
 
 %changelog
+* Mon Nov 09 2026 Benedikt Nimmervoll <nimmervoll.benedikt+copr@gmail.com> - 0.3.3-3
+- Startumbruch entfernt: webkit2gtk4.1 >= 2.54.2 enthält den Fix für
+  WebKit-Bug 327701 (Skia-Compositor/backdrop-filter)
+- Programmdatei wieder direkt als /usr/bin/lap installiert
+- lap.desktop startet ohne WEBKIT_USE_SKIA_FOR_COMPOSITION=0
+
 * Mon Oct 19 2026 Benedikt Nimmervoll <nimmervoll.benedikt+copr@gmail.com> - 0.3.3-2
 - Startumbruch /usr/bin/lap setzt WEBKIT_USE_SKIA_FOR_COMPOSITION=0
   (Arbeitsumgehung fuer WebKit-Bug 327701 im Skia-Compositor von webkit2gtk4.1 2.54.x)
