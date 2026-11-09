@@ -76,6 +76,8 @@ COPR erkennt neue Lap-Releases nicht selbst. Ein Webhook löst den Bau aus:
 
 Erscheint eine neue Fedora-Version, füge den neuen Chroot hinzu, zum Beispiel:
 `copr-cli modify lap --chroot fedora-44-x86_64 --chroot fedora-45-x86_64`
+Achtung: `--chroot` ersetzt die Chroot-Liste, es ergänzt sie nicht. Immer alle
+gewünschten Chroots angeben.
 
 ## Installieren
 
@@ -134,6 +136,16 @@ Das RPM verlangt deshalb `webkit2gtk4.1 >= 2.54.2` und startet Lap ohne
 `WEBKIT_USE_SKIA_FOR_COMPOSITION=0`; der Skia-Compositor bleibt aktiv.
 Der frühere Startumbruch `lap-wrapper.sh` und die Programmdatei unter
 `/usr/libexec/lap-bin` sind entfallen.
+
+## OpenSSL 4 in Fedora 45
+
+Fedora 45 liefert OpenSSL 4.0. Das in Lap 0.3.3 gepinnte `openssl-sys 0.9.112`
+kennt nur OpenSSL 1.1 und 3.x und bricht den Bau mit
+„only compatible with OpenSSL … 1.1.0, 1.1.1, or 3.x“ ab.
+`lap-openssl-sys-0.9.118.patch` hebt in `src-tauri/Cargo.lock` auf
+`openssl-sys 0.9.118` an, das zusätzlich 4.x unterstützt. Die Abhängigkeiten
+sind identisch, geändert werden nur Version und Prüfsumme. Auf Fedora 44
+(OpenSSL 3.x) ist der Patch unschädlich.
 
 ## Bekannte Punkte
 

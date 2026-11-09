@@ -1,0 +1,14 @@
+--- a/src-tauri/Cargo.lock
++++ b/src-tauri/Cargo.lock
+@@ -3985,9 +3985,9 @@
+ 
+ [[package]]
+ name = "openssl-sys"
+-version = "0.9.112"
++version = "0.9.118"
+ source = "registry+https://github.com/rust-lang/crates.io-index"
+-checksum = "57d55af3b3e226502be1526dfdba67ab0e9c96fc293004e79576b2b9edb0dbdb"
++checksum = "19c413d6ec9ebaf5e1c829d355cb3e9f783778d700f135be0921d52fce3c60ae"
+ dependencies = [
+  "cc",
+  "libc",

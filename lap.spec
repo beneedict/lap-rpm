@@ -15,7 +15,7 @@
 
 Name:           lap
 Version:        0.3.3
-Release:        3%{?dist}
+Release:        4%{?dist}
 Summary:        Offline-first photo manager for large local libraries
 License:        GPL-3.0-or-later
 URL:            https://github.com/julyx10/lap
@@ -28,6 +28,9 @@ Source2:        lap-face-models
 # HEVC (HEIC-Fotos) kommt dann über das Plugin aus libheif-freeworld (RPM Fusion).
 # Nur für Lap 0.3.2 und älter. %%prep wendet ihn nur bei Bedarf an.
 Patch0:         lap-system-libheif.patch
+# Fedora 45 liefert OpenSSL 4.0. openssl-sys 0.9.112 kennt nur 1.1/3.x,
+# 0.9.118 unterstützt zusätzlich 4.x. Nur Cargo.lock, keine Quelländerung.
+Patch1:         lap-openssl-sys-0.9.118.patch
 
 ExclusiveArch:  x86_64 aarch64
 
@@ -80,6 +83,7 @@ face grouping without cloud uploads.
 if ! grep -q LAP_SYSTEM_LIBHEIF src-tauri/build.rs; then
 %patch -P 0 -p1
 fi
+%patch -P 1 -p1
 
 %build
 export CARGO_HOME="$PWD/.cargo-home"
@@ -135,6 +139,9 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/lap.desktop
 %{_datadir}/icons/hicolor/512x512/apps/lap.png
 
 %changelog
+* Mon Nov 09 2026 Benedikt Nimmervoll <nimmervoll.benedikt+copr@gmail.com> - 0.3.3-4
+- Cargo.lock: openssl-sys 0.9.118 statt 0.9.112 (OpenSSL 4.x in Fedora 45)
+
 * Mon Nov 09 2026 Benedikt Nimmervoll <nimmervoll.benedikt+copr@gmail.com> - 0.3.3-3
 - Startumbruch entfernt: webkit2gtk4.1 >= 2.54.2 enthält den Fix für
   WebKit-Bug 327701 (Skia-Compositor/backdrop-filter)
