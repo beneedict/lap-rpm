@@ -22,11 +22,11 @@ https://copr.fedorainfracloud.org/coprs/beneedict/lap/
 
 ## Lokal bauen und testen
 
-1. Erzeuge das SRPM: `./make-srpm.sh 0.3.2`
+1. Erzeuge das SRPM: `./make-srpm.sh 0.4.0`
 2. Baue das RPM mit Netzwerk:
-   `mock -r fedora-44-x86_64 --enable-network --rebuild out/lap-0.3.2-1.fc44.src.rpm`
-3. Das RPM liegt danach in `/var/lib/mock/fedora-44-x86_64/result/`.
-4. Prüfe das RPM: `rpmlint /var/lib/mock/fedora-44-x86_64/result/lap-0.3.2-1.fc44.x86_64.rpm`
+   `mock -r fedora-45-x86_64 --enable-network --rebuild out/lap-0.4.0-1.fc45.src.rpm`
+3. Das RPM liegt danach in `/var/lib/mock/fedora-45-x86_64/result/`.
+4. Prüfe das RPM: `rpmlint /var/lib/mock/fedora-45-x86_64/result/lap-0.4.0-1.fc45.x86_64.rpm`
 
 ## COPR einrichten (einmalig)
 
@@ -58,7 +58,10 @@ copr-cli edit-package-custom lap --name lap --script copr-custom.sh \
 ```
 
 `--timeout 43200` erlaubt 12 Stunden pro Bau. Der Standard von COPR ist 5 Stunden.
-Der Bau von Lap 0.3.3 hat dieses Limit überschritten, weil Lap mit `lto = true` und `codegen-units = 1` baut.
+Der erste Bau von Lap 0.4.0 hat dieses Limit überschritten, weil Lap mit
+`lto = true` und `codegen-units = 1` baut. Die Spec setzt deshalb beim Bau
+`CARGO_PROFILE_RELEASE_LTO=thin` und `CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16`.
+Die Laufzeit ändert sich dadurch kaum, der Bau wird deutlich kürzer.
 
 COPR begrenzt das Skript auf 4 kB. Änderungen an `lap.spec` und den anderen Dateien wirken nach `git push` ohne neues Eintragen.
 
@@ -107,7 +110,7 @@ Das Paket enthält keinen HEVC-Decoder. Fedora und COPR dürfen ihn wegen Patent
 Fedoras `libheif` kann kein HEVC. Für HEIC-Fotos (z. B. vom iPhone) installiere das Plugin aus RPM Fusion:
 `sudo dnf install libheif-freeworld`
 
-Ab der nächsten Lap-Version nach 0.3.2 ist die Option `LAP_SYSTEM_LIBHEIF` in Lap enthalten (PR #359).
+Seit Lap 0.3.3 ist die Option `LAP_SYSTEM_LIBHEIF` in Lap enthalten (PR #359).
 `%prep` wendet den Patch deshalb nur an, wenn `src-tauri/build.rs` die Option noch nicht kennt.
 
 ## FFmpeg
@@ -139,13 +142,14 @@ Der frühere Startumbruch `lap-wrapper.sh` und die Programmdatei unter
 
 ## OpenSSL 4 in Fedora 45
 
-Fedora 45 liefert OpenSSL 4.0. Das in Lap 0.3.3 gepinnte `openssl-sys 0.9.112`
-kennt nur OpenSSL 1.1 und 3.x und bricht den Bau mit
-„only compatible with OpenSSL … 1.1.0, 1.1.1, or 3.x“ ab.
-`lap-openssl-sys-0.9.118.patch` hebt in `src-tauri/Cargo.lock` auf
-`openssl-sys 0.9.118` an, das zusätzlich 4.x unterstützt. Die Abhängigkeiten
-sind identisch, geändert werden nur Version und Prüfsumme. Auf Fedora 44
-(OpenSSL 3.x) ist der Patch unschädlich.
+Fedora 45 liefert OpenSSL 4.0. Lap 0.4.0 pinnt `openssl 0.10.76` und
+`openssl-sys 0.9.112`; beide kennen nur OpenSSL 1.1 und 3.x. `openssl-sys`
+bricht den Bau mit „only compatible with OpenSSL … 1.1.0, 1.1.1, or 3.x“ ab,
+`openssl 0.10.76` scheitert an den geänderten const-Zeigern von OpenSSL 4.
+`lap-openssl4.patch` hebt in `src-tauri/Cargo.lock` auf `openssl 0.10.82` und
+`openssl-sys 0.9.118` an. Geändert werden nur Versionen, Prüfsummen und die
+entfallene `once_cell`-Abhängigkeit. Auf Fedora 44 (OpenSSL 3.x) ist der
+Patch unschädlich.
 
 ## Bekannte Punkte
 

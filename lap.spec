@@ -14,8 +14,8 @@
 %endif
 
 Name:           lap
-Version:        0.3.3
-Release:        4%{?dist}
+Version:        0.4.0
+Release:        1%{?dist}
 Summary:        Offline-first photo manager for large local libraries
 License:        GPL-3.0-or-later
 URL:            https://github.com/julyx10/lap
@@ -28,9 +28,10 @@ Source2:        lap-face-models
 # HEVC (HEIC-Fotos) kommt dann über das Plugin aus libheif-freeworld (RPM Fusion).
 # Nur für Lap 0.3.2 und älter. %%prep wendet ihn nur bei Bedarf an.
 Patch0:         lap-system-libheif.patch
-# Fedora 45 liefert OpenSSL 4.0. openssl-sys 0.9.112 kennt nur 1.1/3.x,
-# 0.9.118 unterstützt zusätzlich 4.x. Nur Cargo.lock, keine Quelländerung.
-Patch1:         lap-openssl-sys-0.9.118.patch
+# Fedora 45 liefert OpenSSL 4.0. Die gepinnten openssl 0.10.76 und
+# openssl-sys 0.9.112 kennen nur 1.1 und 3.x. Ab openssl 0.10.78 und
+# openssl-sys 0.9.113 ist 4.x unterstützt. Nur Cargo.lock, keine Quelländerung.
+Patch1:         lap-openssl4.patch
 
 ExclusiveArch:  x86_64 aarch64
 
@@ -88,6 +89,11 @@ fi
 %build
 export CARGO_HOME="$PWD/.cargo-home"
 export CARGO_PROFILE_RELEASE_STRIP=true
+# Lap baut mit lto = true und codegen-units = 1. Mit rund 570 Crates
+# überschreitet das das COPR-Zeitlimit von 12 Stunden. Thin-LTO und 16
+# Codegen-Einheiten verkürzen den Bau deutlich.
+export CARGO_PROFILE_RELEASE_LTO=thin
+export CARGO_PROFILE_RELEASE_CODEGEN_UNITS=16
 export NUM_JOBS=%{_smp_build_ncpus}
 export LAP_SYSTEM_LIBHEIF=1
 
@@ -129,7 +135,7 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/lap.desktop
 
 %files
 %license LICENSE
-%doc README.md PRIVACY.md
+%doc README.md PRIVACY.md THIRD_PARTY_NOTICES.txt
 %{_bindir}/lap
 %{_bindir}/lap-face-models
 %{_prefix}/lib/Lap/
@@ -139,6 +145,12 @@ desktop-file-validate %{buildroot}%{_datadir}/applications/lap.desktop
 %{_datadir}/icons/hicolor/512x512/apps/lap.png
 
 %changelog
+* Wed Nov 18 2026 Benedikt Nimmervoll <nimmervoll.benedikt+copr@gmail.com> - 0.4.0-1
+- Update auf 0.4.0
+- Cargo.lock: openssl 0.10.82 und openssl-sys 0.9.118 (OpenSSL 4.x in Fedora 45)
+- Bauzeit: Thin-LTO und 16 Codegen-Einheiten statt Fat-LTO und einer Einheit
+- Drittanbieter-Hinweise (THIRD_PARTY_NOTICES.txt) als Dokumentation installiert
+
 * Mon Nov 09 2026 Benedikt Nimmervoll <nimmervoll.benedikt+copr@gmail.com> - 0.3.3-4
 - Cargo.lock: openssl-sys 0.9.118 statt 0.9.112 (OpenSSL 4.x in Fedora 45)
 
